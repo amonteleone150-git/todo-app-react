@@ -1,9 +1,18 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import TodoList from "../components/TodoList";
 
 function Home() {
-  const [todos, setTodos] = useState([]);
+  const [todos, setTodos] = useState(() => {
+    const savedTodos = JSON.parse(localStorage.getItem("todos"));
+    return savedTodos || [];
+  });
   const [inputValue, setInputValue] = useState("");
+  const [filter, setFilter] = useState("all"); // nuovo stato
+
+  // ⭐ Salva i todo ogni volta che cambiano
+  useEffect(() => {
+    localStorage.setItem("todos", JSON.stringify(todos));
+  }, [todos]);
 
   const addTodo = () => {
     if (inputValue.trim() === "") return;
@@ -21,14 +30,21 @@ function Home() {
   const toggleTodo = (id) => {
     setTodos(
       todos.map((todo) =>
-        todo.id === id ? { ...todo, completed: !todo.completed } : todo,
-      ),
+        todo.id === id ? { ...todo, completed: !todo.completed } : todo
+      )
     );
   };
 
   const deleteTodo = (id) => {
     setTodos(todos.filter((todo) => todo.id !== id));
   };
+
+  // ⭐ Logica dei filtri
+  const filteredTodos = todos.filter((todo) => {
+    if (filter === "active") return !todo.completed;
+    if (filter === "completed") return todo.completed;
+    return true; // all
+  });
 
   return (
     <div className="todo-container">
@@ -41,9 +57,16 @@ function Home() {
 
       <button onClick={addTodo}>Aggiungi</button>
 
+      {/* ⭐ Bottoni dei filtri */}
+      <div className="filters">
+        <button onClick={() => setFilter("all")}>Tutti</button>
+        <button onClick={() => setFilter("active")}>Attivi</button>
+        <button onClick={() => setFilter("completed")}>Completati</button>
+      </div>
+
       <div className="todo-list">
         <TodoList
-          todos={todos}
+          todos={filteredTodos} // usa i todo filtrati
           toggleTodo={toggleTodo}
           deleteTodo={deleteTodo}
         />
